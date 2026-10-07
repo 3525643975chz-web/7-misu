@@ -144,7 +144,10 @@ jobs:
       - name: Write key
         if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         run: |
+          pwd
+          ls -la
           cd ./manager
+          ls -la
           if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
           {
             echo KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}'
@@ -162,7 +165,10 @@ jobs:
           PR_KEYSTORE_PASSWORD: ${{ needs.generate-key.outputs.keystore_password }}
           PR_KEY_PASSWORD: ${{ needs.generate-key.outputs.key_password }}
         run: |
+            pwd
+            ls -la
             cd ./manager
+            ls -la
             echo "$PR_KEYSTORE" | base64 -d > pr-key.jks
             {
             echo KEYSTORE_PASSWORD="$PR_KEYSTORE_PASSWORD"
@@ -210,7 +216,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
