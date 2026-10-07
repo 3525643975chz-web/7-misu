@@ -142,17 +142,23 @@ jobs:
           fetch-depth: 0
 
       - name: Write key
-        if: ${{ ( github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' )) || github.ref_type == 'tag' }}
-        run: |
-          if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
-            {
-              echo KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}'
-              echo KEY_ALIAS='${{ secrets.KEY_ALIAS }}'
-              echo KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}'
-              echo KEYSTORE_FILE='key.jks'
-            } >> gradle.properties
-            echo "${{ secrets.KEYSTORE }}" | base64 -d > key.jks
-          fi
+  if: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main') }}
+  run: |
+    cd ..
+    chmod +x .github/scripts/*.sh
+    chmod +x ./*.sh
+    cd ./manager
+    if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
+    {
+      echo KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}'
+      echo KEY_ALIAS='${{ secrets.KEY_ALIAS }}'
+      echo KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}'
+      echo KEYSTORE_FILE='key.jks'
+    } >> gradle.properties
+    echo "${{ secrets.KEYSTORE }}" | base64 -d > key.jks
+    fi
+
+
 
       - name: Write PR key
         if: github.event_name == 'pull_request'
@@ -161,13 +167,18 @@ jobs:
           PR_KEYSTORE_PASSWORD: ${{ needs.generate-key.outputs.keystore_password }}
           PR_KEY_PASSWORD: ${{ needs.generate-key.outputs.key_password }}
         run: |
-          echo "$PR_KEYSTORE" | base64 -d > pr-key.jks
-          {
-            echo KEYSTORE_PASSWORD="$PR_KEYSTORE_PASSWORD"
-            echo KEY_ALIAS='pr-key'
-            echo KEY_PASSWORD="$PR_KEY_PASSWORD"
-            echo KEYSTORE_FILE='pr-key.jks'
-          } >> gradle.properties
+          cd ..
+          chmod +x .github/scripts/*.sh
+          chmod +x ./*.sh
+          cd ./manager
+          echo "$PR_KEYSTORE" | base64 -d > pr-key.jk
+          {         
+          echo KEYSTORE_PASSWORD="$PR_KEYSTORE_PASSWORD"
+          echo KEY_ALIAS='pr-key'
+          echo KEY_PASSWORD="$PR_KEY_PASSWORD"
+          echo KEYSTORE_FILE='pr-key.jks'
+  } >> gradle.properties
+
 
       - name: Setup Java
         uses: actions/setup-java@v6
