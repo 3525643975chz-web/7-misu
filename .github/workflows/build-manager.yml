@@ -102,11 +102,11 @@ jobs:
     uses: ./.github/workflows/ksud.yml
     with:
       target: ${{ matrix.target }}
-      pack_lkm: true
-      pack_ksuinit: true
+      pack_lkm: false
+      pack_ksuinit: false
   
   build-ksud-extra:
-    needs: [build-lkm, build-ksuinit]
+    needs: [build-ksuinit]
     strategy:
       matrix:
         include:
@@ -124,8 +124,8 @@ jobs:
     with:
       target: ${{ matrix.target }}
       os: ${{ matrix.os }}
-      pack_lkm: true
-      pack_ksuinit: true
+      pack_lkm: false
+      pack_ksuinit: false
 
   build-manager:
     needs: [generate-key]
