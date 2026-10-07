@@ -35,7 +35,9 @@ on:
       - 'userspace/**'
       - 'Cargo.lock'
       - 'Cargo.toml'
+  workflow_dispatch:    
   workflow_call:
+
 
 jobs:
   generate-key:
