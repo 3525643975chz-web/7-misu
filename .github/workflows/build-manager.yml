@@ -5,8 +5,6 @@ on:
     branches: [ "main", "dev", "ci" ]
     paths:
       - '.github/workflows/build-manager.yml'
-      - '.github/workflows/build-lkm.yml'
-      - '.github/workflows/ddk-lkm.yml'
       - '.github/workflows/ksud.yml'
       - '.github/workflows/ksud-extra.yml'
       - '.github/workflows/ksuinit.yml'
@@ -14,7 +12,6 @@ on:
       - '.github/riscv64-cargo.toml'
       - 'repack_apk.py'
       - 'manager/**'
-      - 'kernel/**'
       - 'userspace/**'
       - 'Cargo.lock'
       - 'Cargo.toml'
@@ -22,8 +19,6 @@ on:
     branches: [ "main", "dev" ]
     paths:
       - '.github/workflows/build-manager.yml'
-      - '.github/workflows/build-lkm.yml'
-      - '.github/workflows/ddk-lkm.yml'
       - '.github/workflows/ksud.yml'
       - '.github/workflows/ksud-extra.yml'
       - '.github/workflows/ksuinit.yml'
@@ -31,7 +26,6 @@ on:
       - '.github/riscv64-cargo.toml'
       - 'repack_apk.py'
       - 'manager/**'
-      - 'kernel/**'
       - 'userspace/**'
       - 'Cargo.lock'
       - 'Cargo.toml'    
@@ -94,19 +88,11 @@ jobs:
           echo "Certificate size: $SIZE_HEX ($SIZE_DEC bytes)"
           echo "Certificate hash: $HASH"
 
-  build-lkm:
-    needs: generate-key
-    uses: ./.github/workflows/build-lkm.yml
-    with:
-      expected_size: ${{ needs.generate-key.outputs.expected_size || '' }}
-      expected_hash: ${{ needs.generate-key.outputs.expected_hash || '' }}
-    secrets: inherit
-
   build-ksuinit:
     uses: ./.github/workflows/ksuinit.yml
 
   build-ksud:
-    needs: [build-lkm, build-ksuinit]
+    needs: [build-ksuinit]
     strategy:
       matrix:
         include:
