@@ -144,7 +144,6 @@ jobs:
       - name: Write key
         if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         run: |
-          cd ..
           chmod +x .github/scripts/*.sh
           chmod +x ./*.sh
           cd ./manager
@@ -165,7 +164,6 @@ jobs:
           PR_KEYSTORE_PASSWORD: ${{ needs.generate-key.outputs.keystore_password }}
           PR_KEY_PASSWORD: ${{ needs.generate-key.outputs.key_password }}
         run: |
-            cd ..
             chmod +x .github/scripts/*.sh
             chmod +x ./*.sh
             cd ./manager
