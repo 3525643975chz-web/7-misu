@@ -34,8 +34,7 @@ on:
       - 'kernel/**'
       - 'userspace/**'
       - 'Cargo.lock'
-      - 'Cargo.toml'
-  workflow_dispatch:    
+      - 'Cargo.toml'    
   workflow_call:
 
 
