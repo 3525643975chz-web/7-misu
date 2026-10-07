@@ -147,6 +147,7 @@ jobs:
           pwd
           ls -la
           cd ./manager
+          pwd
           ls -la
           if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
           {
@@ -168,6 +169,7 @@ jobs:
             pwd
             ls -la
             cd ./manager
+            pwd
             ls -la
             echo "$PR_KEYSTORE" | base64 -d > pr-key.jks
             {
