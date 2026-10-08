@@ -5,6 +5,8 @@ on:
     branches: [ "main", "dev", "ci" ]
     paths:
       - '.github/workflows/build-manager.yml'
+      - '.github/workflows/build-lkm.yml'
+      - '.github/workflows/ddk-lkm.yml'
       - '.github/workflows/ksud.yml'
       - '.github/workflows/ksud-extra.yml'
       - '.github/workflows/ksuinit.yml'
@@ -12,6 +14,7 @@ on:
       - '.github/riscv64-cargo.toml'
       - 'repack_apk.py'
       - 'manager/**'
+      - 'kernel/**'
       - 'userspace/**'
       - 'Cargo.lock'
       - 'Cargo.toml'
@@ -19,6 +22,8 @@ on:
     branches: [ "main", "dev" ]
     paths:
       - '.github/workflows/build-manager.yml'
+      - '.github/workflows/build-lkm.yml'
+      - '.github/workflows/ddk-lkm.yml'
       - '.github/workflows/ksud.yml'
       - '.github/workflows/ksud-extra.yml'
       - '.github/workflows/ksuinit.yml'
@@ -26,11 +31,11 @@ on:
       - '.github/riscv64-cargo.toml'
       - 'repack_apk.py'
       - 'manager/**'
+      - 'kernel/**'
       - 'userspace/**'
       - 'Cargo.lock'
-      - 'Cargo.toml'    
+      - 'Cargo.toml'
   workflow_call:
-
 
 jobs:
   generate-key:
@@ -88,11 +93,19 @@ jobs:
           echo "Certificate size: $SIZE_HEX ($SIZE_DEC bytes)"
           echo "Certificate hash: $HASH"
 
+  build-lkm:
+    needs: generate-key
+    uses: ./.github/workflows/build-lkm.yml
+    with:
+      expected_size: ${{ needs.generate-key.outputs.expected_size || '' }}
+      expected_hash: ${{ needs.generate-key.outputs.expected_hash || '' }}
+    secrets: inherit
+
   build-ksuinit:
     uses: ./.github/workflows/ksuinit.yml
 
   build-ksud:
-    needs: [build-ksuinit]
+    needs: [build-lkm, build-ksuinit]
     strategy:
       matrix:
         include:
@@ -102,11 +115,11 @@ jobs:
     uses: ./.github/workflows/ksud.yml
     with:
       target: ${{ matrix.target }}
-      pack_lkm: false
+      pack_lkm: true
       pack_ksuinit: true
   
   build-ksud-extra:
-    needs: [build-ksuinit]
+    needs: [build-lkm, build-ksuinit]
     strategy:
       matrix:
         include:
@@ -124,7 +137,7 @@ jobs:
     with:
       target: ${{ matrix.target }}
       os: ${{ matrix.os }}
-      pack_lkm: false
+      pack_lkm: true
       pack_ksuinit: true
 
   build-manager:
@@ -142,43 +155,32 @@ jobs:
           fetch-depth: 0
 
       - name: Write key
-        if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+        if: ${{ ( github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' )) || github.ref_type == 'tag' }}
         run: |
-          pwd
-          ls -la
-          cd ./manager
-          pwd
-          ls -la
           if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
-          {
-            echo KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}'
-            echo KEY_ALIAS='${{ secrets.KEY_ALIAS }}'
-            echo KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}'
-            echo KEYSTORE_FILE='key.jks'
+            {
+              echo KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}'
+              echo KEY_ALIAS='${{ secrets.KEY_ALIAS }}'
+              echo KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}'
+              echo KEYSTORE_FILE='key.jks'
             } >> gradle.properties
             echo "${{ secrets.KEYSTORE }}" | base64 -d > key.jks
           fi
 
       - name: Write PR key
-        if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+        if: github.event_name == 'pull_request'
         env:
           PR_KEYSTORE: ${{ needs.generate-key.outputs.keystore }}
           PR_KEYSTORE_PASSWORD: ${{ needs.generate-key.outputs.keystore_password }}
           PR_KEY_PASSWORD: ${{ needs.generate-key.outputs.key_password }}
         run: |
-            pwd
-            ls -la
-            cd ./manager
-            pwd
-            ls -la
-            echo "$PR_KEYSTORE" | base64 -d > pr-key.jks
-            {
+          echo "$PR_KEYSTORE" | base64 -d > pr-key.jks
+          {
             echo KEYSTORE_PASSWORD="$PR_KEYSTORE_PASSWORD"
             echo KEY_ALIAS='pr-key'
             echo KEY_PASSWORD="$PR_KEY_PASSWORD"
             echo KEYSTORE_FILE='pr-key.jks'
-            } >> gradle.properties
-
+          } >> gradle.properties
 
       - name: Setup Java
         uses: actions/setup-java@v6
@@ -218,7 +220,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
